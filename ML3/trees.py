@@ -23,21 +23,20 @@ def calcShannonEnt(dataSet):
         # 如果当前键值不存在，则扩展字典并将当前键值加入字典
         if currentLabel not in labelCounts.keys():
             labelCounts[currentLabel] = 0
-            labelCounts[currentLabel] += 1
-        shannonEnt = 0.0
+        labelCounts[currentLabel] += 1
+    shannonEnt = 0.0
 
     for key in labelCounts:
         prob = float(labelCounts[key]) / numEntries
         # 以2为底求对数log2(下)prob（上），计算香农熵
         shannonEnt -= prob * log(prob, 2)
-
     return shannonEnt
 
 
 #
 # 按照指定特征划分数据集合
 #  dataset 等待划分的数据集合
-#  axis 划分数据集的特征
+#  axis 划分数据集的特征（就是去掉最后labels剩下的特征值的index）
 #  value 需要返回的的特征的值
 #
 # 返回的是
@@ -47,12 +46,15 @@ def splitDataSet(dataSet, axis, value):
     # 创建这个list对象的原因是为了不修改原始数据集合，因为splitDataSet函数在同一数据上多次引用
     retDataSet = [];
     for featVec in dataSet:
+        #当需要返回的特征值与fetVec（fet就是一条数据的4个特征值），fetVet[i]就是获取一个特征
         if featVec[axis] == value:
             # ❷ （以下三行）抽取
+            #取出除去这个特征之外的数据
             reducedFeatVec = featVec[:axis]
             # 如果使用a.append(n)，[1,2,3,[4,5,6,]];而a.extend(b)==[1,2,3,4,5,6]
             reducedFeatVec.extend(featVec[axis + 1:])
             retDataSet.append(reducedFeatVec)
+    #返回了这个特征下的下的所有数据
     return retDataSet
 
 
@@ -66,29 +68,33 @@ def chooseBestFeatureToSplit(dataSet):
     numFeatures = len(dataSet[0]) - 1
     # 计算了整个数据集的原始香农熵,保存最初的无序度量值，用于与划分完之后的数据集计算的熵值进行比较。
     baseEntropy = calcShannonEnt(dataSet)
+    print(baseEntropy)
     bestInfoGain = 0.0;
     bestFeature = -1
     # 第一个for循环遍历了所有特征
     for i in range(numFeatures):
         # ❶ （以下两行）创建唯一的分类标签列表,
         # 创建新的列表，将数据集中所有第i个特征值写入这个新列表
+        # 获得所有数据第i个特征组成给一个列表，在uniquevals进行去重
         featList = [example[i] for example in dataSet]
         uniqueVals = set(featList)
         newEntropy = 0.0
         # ❷ （以下五行）计算每种划分方式的信息熵
         # 遍历当前特征中的唯一属性值，对每一个特征划分一次数据集2
         for value in uniqueVals:
+            #取得特征下的所有值
             subDataSet = splitDataSet(dataSet, i, value)
-            # len计算元素个数
+            # len计算元素个数，子集的个数/总数
             prob = len(subDataSet) / float(len(dataSet))
+            #新的熵=这个比例*子集的熵（各个子集相加）
             newEntropy += prob * calcShannonEnt(subDataSet)
             infoGain = baseEntropy - newEntropy
-            # 信息增益是熵的减少或者数据无须度的减少
-            if (infoGain > bestInfoGain):
-                # ❸  计算最好的信息增益
-                bestInfoGain = infoGain
-                bestFeature = i
-        return bestFeature
+            # 信息增益是熵的减少或者数据无须度的减少，所以infoGain越大说明新的enwEntropy越小，数据越好。
+        if (infoGain > bestInfoGain):
+            # ❸  计算最好的信息增益
+            bestInfoGain = infoGain
+            bestFeature = i
+    return bestFeature
 
 
 ## set 是集合数据类型，从列表中从创建集合是python语言中得到列表中唯一元素值的最快方法
@@ -123,39 +129,75 @@ def majorityCnt(classList):
 # 　
 #
 def createTree(dataSet, labels):
-    #创建了列表变量classList：包含了数据集的所有类标签
+    # 创建了列表变量classList：包含了数据集的所有类标签
     # 获取这个类的最后一项，和要求2相同
     classList = [example[-1] for example in dataSet]
     # 递归函数有2个停止条件：
     # ❶ （以下两行）类别完全相同则停止继续划分
-        #classList 中第一个分类的数量=classList的len
+    # classList 中第一个分类的数量=classList的len：
     if classList.count(classList[0]) == len(classList):
         return classList[0]
     # ❷ （以下两行）遍历完所有特征时返回出现次数最多的
-        # dataSet使用完了所有特征，仍不能将数据集合划分成仅包含一类别的分组
+    # dataSet使用完了所有特征，仍不能将数据集合划分成仅包含一类别的分组
     if len(dataSet[0]) == 1:
         # 由于无法返回唯一的类标签，使用majorityCnt取得最多频率的标签
         return majorityCnt(classList)
-    #划分数据集合，计算出最好的划分数据集特征
+    # 划分数据集合，计算出最好的划分数据集特征
     bestFeat = chooseBestFeatureToSplit(dataSet)
-    #获得标签列表中最好的数据集合的值
+    # 获得标签列表中最好的数据集合的值
     bestFeatLabel = labels[bestFeat]
-    #字典类型存储树的信息
+    # 字典类型存储树的信息
     myTree = {bestFeatLabel: {}}
     # ❸ 得到列表包含的所胡属性值，并且删掉
     del (labels[bestFeat])
-    #遍历当前选择特征包含的所有属性值
+    # 遍历当前选择特征包含的所有属性值
     featValues = [example[bestFeat] for example in dataSet]
-    #set() 函数创建一个无序不重复元素集，可进行关系测试，删除重复数据，还可以计算交集、差集、并集等。
-    #构成了一个不重复的属性值集合
+    # set() 函数创建一个无序不重复元素集，可进行关系测试，删除重复数据，还可以计算交集、差集、并集等。
+    # 构成了一个不重复的属性值集合
     uniqueVals = set(featValues)
     # 遍历这个不重复的属性集合，
     for value in uniqueVals:
-        #subLabels 就是labels去掉列表包含属性值的后的标签列表
-        #为了保证每次调用函数createTree() 时不改变原始列表的内容，使用新变量subLabels 代替原始列表
+        # subLabels 就是labels去掉列表包含属性值的后的标签列表
+        # 为了保证每次调用函数createTree() 时不改变原始列表的内容，使用新变量subLabels 代替原始列表
         subLabels = labels[:]
         # bestFeatLabel=列表中最好数据的集合的值  value=不重复的标签
         # 得到的返回值将被插入到字典变量myTree 中
         myTree[bestFeatLabel][value] = createTree(splitDataSet(dataSet, bestFeat, value), subLabels)
 
     return myTree
+
+#
+# inputTree  树
+# featLabels  显示的种类
+# testVec ，就是判断的依据
+#
+def classify(inputTree, featLabels, testVec):
+    # 获取第一个标签字符串
+    firstStr = list(inputTree.keys())[0]
+    # 根据标签字符串取得该标签下的树的数据数据
+    secondDict = inputTree[firstStr]
+    # ❶将标签字符串转换为索引
+    featIndex = featLabels.index(firstStr)
+    # 遍历改标签下树的key
+    for key in secondDict.keys():
+        # 如果testVec[索引]==key的时候，说明得到判断的依据，例子为0,1
+        if testVec[featIndex] == key:
+            if type(secondDict[key]).__name__ == 'dict':
+                classLabel = classify(secondDict[key], featLabels, testVec)
+            else:
+                classLabel = secondDict[key]
+    # 最后的classLabel就是判断依据的key 得到的值
+    return classLabel
+
+
+# pickle:暂时持久化的set 与 get
+def storeTree(inputTree, filename):
+    import pickle
+    fw = open(filename, 'w')
+    pickle.dump(inputTree, fw)
+    fw.close()
+
+def grabTree(filename):
+    import pickle
+    fr = open(filename)
+    return pickle.load(fr)

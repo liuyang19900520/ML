@@ -1,5 +1,6 @@
 from ML3.treePoltter import retrieveTree,getTreeDepth,getNumLeafs,createPlot
-
+# from ML3.trees import createDataSet,classify,createTree,storeTree,grabTree,createTree2
+from ML3.trees2 import createDataSet,classify,createTree,storeTree,grabTree
 #
 # myDat, labels = createDataSet()
 # print(myDat)
@@ -54,8 +55,28 @@ from ML3.treePoltter import retrieveTree,getTreeDepth,getNumLeafs,createPlot
 # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
 
 #treePoltter.retrieveTree(1)
-myTree=retrieveTree(0)
-myTree['no surfacing'][3] = 'maybe'
-myTree['no surfacing'][4] = 'maybe'
-print(myTree)
-createPlot(myTree)
+# myTree=retrieveTree(0)
+# myTree['no surfacing'][3] = 'maybe'
+# myTree['no surfacing'][4] = 'maybe'
+# print(myTree)
+# createPlot(myTree)
+
+# myDat,labels=createDataSet()
+# print(labels)
+# myTree=retrieveTree(0)
+# r=classify(myTree,labels,[1,0])
+# print(r)
+#
+# storeTree(myTree)
+
+#打开文件
+fr=open('lenses.txt')
+#获得lenses的矩阵，即之前使用的myDat
+lenses=[inst.strip().split('\t') for inst in fr.readlines()]
+print(lenses)
+#获得lenses的矩阵，即之前使用的labels
+lensesLabels = [ 'tearRate','age', 'prescript', 'astigmatic']
+lensesTree =createTree(lenses, lensesLabels)
+print(lensesTree)
+#创建
+createPlot(lensesTree)
