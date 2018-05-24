@@ -131,3 +131,63 @@ def testingNB():
     testEntry = ['stupid', 'garbage']
     thisDoc = array(setOfWords2Vec(myVocabList, testEntry))
     print(testEntry, 'classified as: ', classifyNB(thisDoc, p0V, p1V, pAb))
+
+
+#
+# 接受一个大字符串并将其解析为字符串列表。
+# 该函数去掉少于两个字符的字符串，并将所有字符串转换为小写。
+#
+
+def textParse(bigString):  # input is big string, #output is word list
+    import re
+    listOfTokens = re.split(r'\W*', bigString)
+    return [tok.lower() for tok in listOfTokens if len(tok) > 2]
+
+
+def spamTest():
+    docList = [];
+    classList = [];
+    fullText = []
+    for i in range(1, 26):
+        # 正常邮件
+        print('111111111   %d ', i)
+        wordList = textParse(open('email/spam/%d.txt' % i, 'r', encoding='utf-8').read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+        # 垃圾邮件
+        print('00000000   %d ', i)
+        wordList = textParse(open('email/ham/%d.txt' % i, 'r', encoding='utf-8').read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+    # 创建词汇表
+    vocabList = createVocabList(docList)  # create vocabulary
+    trainingSet = list(range(50));
+    testSet = []  # create test set
+    # 构建随机的训练集合
+    for i in range(10):
+        # 任意抽取出10分邮件，第i封，选一个随机数
+        randIndex = int(random.uniform(0, len(trainingSet)))
+        # 加入test的集合中
+        testSet.append(trainingSet[randIndex])
+        # 从训练的集合中移除
+        del (trainingSet[randIndex])
+    trainMat = [];
+    trainClasses = []
+    # 训练集合
+    for docIndex in trainingSet:  # train the classifier (get probs) trainNB0
+        trainMat.append(bagOfWords2VecMN(vocabList, docList[docIndex]))
+        trainClasses.append(classList[docIndex])
+    p0V, p1V, pSpam = trainNB0(array(trainMat), array(trainClasses))
+    errorCount = 0
+
+    # 对测试集进行分类
+    for docIndex in testSet:  # classify the remaining items
+        wordVector = bagOfWords2VecMN(vocabList, docList[docIndex])
+        # 通过分类器得出的结果和判断的词汇表进行判断球的判断的错误率
+        if classifyNB(array(wordVector), p0V, p1V, pSpam) != classList[docIndex]:
+            errorCount += 1
+            print("classification error", docList[docIndex])
+    print('the error rate is: ', float(errorCount) / len(testSet))
+    # return vocabList,fullText

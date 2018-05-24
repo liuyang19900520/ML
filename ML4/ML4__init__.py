@@ -24,4 +24,5 @@ import ML4.bayes as bayes
 # print(pAb)
 
 
-bayes.testingNB();
+# bayes.testingNB();
+bayes.spamTest();
