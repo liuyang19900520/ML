@@ -2,6 +2,7 @@ from math import log
 import operator
 
 
+# 创建数据集
 def createDataSet():
     dataSet = [[1, 1, 'yes'],
                [1, 1, 'yes'],
@@ -12,20 +13,23 @@ def createDataSet():
     return dataSet, labels
 
 
+# 计算给定数据集的香农熵
 def calcShannonEnt(dataSet):
     # 计算实例的总数
     numEntries = len(dataSet)
     labelCounts = {}
-    # 为所有可能创建字典
+    # 为所有可能创建字典，即每一种情况
     for featVec in dataSet:
-        # 创建一个数据字典，它的键值是最后一列的数
+        # 创建一个数据字典，它的键值是最后一列的数，获得最后的评定
         currentLabel = featVec[-1]
         # 如果当前键值不存在，则扩展字典并将当前键值加入字典
         if currentLabel not in labelCounts.keys():
+            # 这个评定不在字典中，就添加，并将值设置为0
             labelCounts[currentLabel] = 0
+        # 这个评定在列表中，就给数值+1
         labelCounts[currentLabel] += 1
     shannonEnt = 0.0
-
+    # 最后得到的labelCounts应该是每个评定以及每个评定的个数
     for key in labelCounts:
         prob = float(labelCounts[key]) / numEntries
         # 以2为底求对数log2(下)prob（上），计算香农熵
@@ -42,19 +46,20 @@ def calcShannonEnt(dataSet):
 # 返回的是
 #
 def splitDataSet(dataSet, axis, value):
-    # ❶ 创建新的list对象
     # 创建这个list对象的原因是为了不修改原始数据集合，因为splitDataSet函数在同一数据上多次引用
     retDataSet = [];
     for featVec in dataSet:
-        #当需要返回的特征值与fetVec（fet就是一条数据的4个特征值），fetVet[i]就是获取一个特征
+        # 当需要返回的特征值与fetVec（fet就是一条数据的3个特征值），fetVet[i]就是获取一个特征
+        # 当得到的特征与我们传入的特征（value）
         if featVec[axis] == value:
-            # ❷ （以下三行）抽取
-            #取出除去这个特征之外的数据
+            # 以下两行取出除去这个特征之外的数据,
+            # 从index为0的元素一直到底axis元素
             reducedFeatVec = featVec[:axis]
             # 如果使用a.append(n)，[1,2,3,[4,5,6,]];而a.extend(b)==[1,2,3,4,5,6]
+            # 从index为axis+1的元素一直到最后元素
             reducedFeatVec.extend(featVec[axis + 1:])
             retDataSet.append(reducedFeatVec)
-    #返回了这个特征下的下的所有数据
+    # 返回了这个特征下的下的所有数据
     return retDataSet
 
 
@@ -65,28 +70,30 @@ def splitDataSet(dataSet, axis, value):
 # 2，数据的最后一列，或者每个实例最后一个元祖是当前实例的类别的标签
 #
 def chooseBestFeatureToSplit(dataSet):
+    # 获取数据集合一共有多少特征值
     numFeatures = len(dataSet[0]) - 1
     # 计算了整个数据集的原始香农熵,保存最初的无序度量值，用于与划分完之后的数据集计算的熵值进行比较。
     baseEntropy = calcShannonEnt(dataSet)
-    print(baseEntropy)
     bestInfoGain = 0.0;
     bestFeature = -1
-    # 第一个for循环遍历了所有特征
+    # 第一个for循环遍历了所有特征（0代表特征一，1代表特征二等等）
     for i in range(numFeatures):
-        # ❶ （以下两行）创建唯一的分类标签列表,
-        # 创建新的列表，将数据集中所有第i个特征值写入这个新列表
-        # 获得所有数据第i个特征组成给一个列表，在uniquevals进行去重
+        # 创建唯一的分类标签列表,将数据集中所有第i个特征值写入这个新列表
+        # 获得所有数据第i个特征组成给一个列表，在uniquevals进行去装
         featList = [example[i] for example in dataSet]
+        # featList是一个数组，而uniqueVals是等于把featList进行了去重，得到了不重复的特征值
         uniqueVals = set(featList)
         newEntropy = 0.0
-        # ❷ （以下五行）计算每种划分方式的信息熵
+        # 计算每种划分方式的信息熵
         # 遍历当前特征中的唯一属性值，对每一个特征划分一次数据集2
+        # 这里的value是每个特征值的具体指，比如0代表可以游泳，1代表不能游泳等等
         for value in uniqueVals:
-            #取得特征下的所有值
+            # dateSet 是这个数据集合，i是这个特征值的index，value是刚刚去重后的特征值
+            # 得出来的应该是符合条件的数据集合
             subDataSet = splitDataSet(dataSet, i, value)
             # len计算元素个数，子集的个数/总数
             prob = len(subDataSet) / float(len(dataSet))
-            #新的熵=这个比例*子集的熵（各个子集相加）
+            # 新的熵=这个比例*子集的熵（各个子集相加）
             newEntropy += prob * calcShannonEnt(subDataSet)
             infoGain = baseEntropy - newEntropy
             # 信息增益是熵的减少或者数据无须度的减少，所以infoGain越大说明新的enwEntropy越小，数据越好。
@@ -166,6 +173,7 @@ def createTree(dataSet, labels):
 
     return myTree
 
+
 #
 # inputTree  树
 # featLabels  显示的种类
@@ -196,6 +204,7 @@ def storeTree(inputTree, filename):
     fw = open(filename, 'w')
     pickle.dump(inputTree, fw)
     fw.close()
+
 
 def grabTree(filename):
     import pickle

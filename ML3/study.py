@@ -1,5 +1,16 @@
 import  operator
 
+
+a = ['a','b','c','d']
+print(a)
+subLabels = a[:3]
+print(subLabels)
+
+
+b=['a','b','c','d']
+print('a',b[:0])
+print('b',b[0+1:])
+
 # sorted(iterable, *, key=None, reverse=False)¶
 #   Return a new sorted list from the items in iterable.
 # 简言之这是一个排序函数，本函数是实现对可迭代对象iterable进行排序。
