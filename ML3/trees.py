@@ -1,5 +1,5 @@
-from math import log
 import operator
+from math import log
 
 
 # 创建数据集
@@ -43,7 +43,7 @@ def calcShannonEnt(dataSet):
 #  axis 划分数据集的特征（就是去掉最后labels剩下的特征值的index）
 #  value 需要返回的的特征的值
 #
-# 返回的是
+# 返回的是：在这个特征值下，有多少数据
 #
 def splitDataSet(dataSet, axis, value):
     # 创建这个list对象的原因是为了不修改原始数据集合，因为splitDataSet函数在同一数据上多次引用
@@ -58,6 +58,7 @@ def splitDataSet(dataSet, axis, value):
             # 如果使用a.append(n)，[1,2,3,[4,5,6,]];而a.extend(b)==[1,2,3,4,5,6]
             # 从index为axis+1的元素一直到最后元素
             reducedFeatVec.extend(featVec[axis + 1:])
+            # 将上述得出的特征值添加到返回值中
             retDataSet.append(reducedFeatVec)
     # 返回了这个特征下的下的所有数据
     return retDataSet
@@ -69,12 +70,14 @@ def splitDataSet(dataSet, axis, value):
 # 1，数据必须是一种由列表元素组成的列表，而且所有列表元素都具有相同的数据长度
 # 2，数据的最后一列，或者每个实例最后一个元祖是当前实例的类别的标签
 #
+# 返回：应该是第几个特征是最好的分类特征
+#
 def chooseBestFeatureToSplit(dataSet):
     # 获取数据集合一共有多少特征值
     numFeatures = len(dataSet[0]) - 1
     # 计算了整个数据集的原始香农熵,保存最初的无序度量值，用于与划分完之后的数据集计算的熵值进行比较。
     baseEntropy = calcShannonEnt(dataSet)
-    bestInfoGain = 0.0;
+    bestInfoGain = 0.0
     bestFeature = -1
     # 第一个for循环遍历了所有特征（0代表特征一，1代表特征二等等）
     for i in range(numFeatures):
@@ -91,20 +94,17 @@ def chooseBestFeatureToSplit(dataSet):
             # dateSet 是这个数据集合，i是这个特征值的index，value是刚刚去重后的特征值
             # 得出来的应该是符合条件的数据集合
             subDataSet = splitDataSet(dataSet, i, value)
-            # len计算元素个数，子集的个数/总数
+            # len计算元素个数，符合特征的子集的个数/总数
             prob = len(subDataSet) / float(len(dataSet))
             # 新的熵=这个比例*子集的熵（各个子集相加）
             newEntropy += prob * calcShannonEnt(subDataSet)
             infoGain = baseEntropy - newEntropy
             # 信息增益是熵的减少或者数据无须度的减少，所以infoGain越大说明新的enwEntropy越小，数据越好。
         if (infoGain > bestInfoGain):
-            # ❸  计算最好的信息增益
+            # 计算最好的信息增益
             bestInfoGain = infoGain
             bestFeature = i
     return bestFeature
-
-
-## set 是集合数据类型，从列表中从创建集合是python语言中得到列表中唯一元素值的最快方法
 
 
 #
@@ -134,18 +134,18 @@ def majorityCnt(classList):
 # 1，数据必须是一种由列表元素组成的列表，而且所有列表元素都具有相同的数据长度
 # 2，数据的最后一列，或者每个实例最后一个元祖是当前实例的类别的标签
 # 　
-#
+
 def createTree(dataSet, labels):
     # 创建了列表变量classList：包含了数据集的所有类标签
     # 获取这个类的最后一项，和要求2相同
     classList = [example[-1] for example in dataSet]
     # 递归函数有2个停止条件：
-    # ❶ （以下两行）类别完全相同则停止继续划分
-    # classList 中第一个分类的数量=classList的len：
+    # （以下两行）类别完全相同则停止继续划分
+    # 第一个停止条件：classList 中第一个分类的数量=classList的len：
     if classList.count(classList[0]) == len(classList):
         return classList[0]
-    # ❷ （以下两行）遍历完所有特征时返回出现次数最多的
-    # dataSet使用完了所有特征，仍不能将数据集合划分成仅包含一类别的分组
+    # （以下两行）遍历完所有特征时返回出现次数最多的
+    # 第二个停止条件：dataSet使用完了所有特征，仍不能将数据集合划分成仅包含一类别的分组
     if len(dataSet[0]) == 1:
         # 由于无法返回唯一的类标签，使用majorityCnt取得最多频率的标签
         return majorityCnt(classList)
@@ -155,7 +155,7 @@ def createTree(dataSet, labels):
     bestFeatLabel = labels[bestFeat]
     # 字典类型存储树的信息
     myTree = {bestFeatLabel: {}}
-    # ❸ 得到列表包含的所胡属性值，并且删掉
+    # 得到列表包含的所胡属性值，并且删掉
     del (labels[bestFeat])
     # 遍历当前选择特征包含的所有属性值
     featValues = [example[bestFeat] for example in dataSet]
