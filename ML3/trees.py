@@ -184,19 +184,23 @@ def classify(inputTree, featLabels, testVec):
     firstStr = list(inputTree.keys())[0]
     # 根据标签字符串取得该标签下的树的数据数据
     secondDict = inputTree[firstStr]
-    # ❶将标签字符串转换为索引
+    # 将第一标签字符串转换为索引
     featIndex = featLabels.index(firstStr)
-    # 遍历改标签下树的key
+    # 遍历该标签下树的key，也就是第二个集合中，有多少个键值对，key代表着第二层决策的键
     for key in secondDict.keys():
-        # 如果testVec[索引]==key的时候，说明得到判断的依据，例子为0,1
+        # key是第二层集合的键
+        # featIndex是第一个决策的键
+        # testVec[featIndex] 用于firstStr所在索引所对应的值（这里的值是1,0，分别代表是否特征1，是否特征2）
+        # 上述值与与第二层决策树节点的key对应，也就是说由于这个inputTree第一层主要是进入决策树用，一定有 testVec[featIndex] == key
         if testVec[featIndex] == key:
+            # 如果进入到第二层，判断是不是子节点，如果还有层级，递归
             if type(secondDict[key]).__name__ == 'dict':
                 classLabel = classify(secondDict[key], featLabels, testVec)
             else:
+                # 如果进入到第二层，如果没有层级了，得到的就是这一层的结果
                 classLabel = secondDict[key]
     # 最后的classLabel就是判断依据的key 得到的值
     return classLabel
-
 
 # pickle:暂时持久化的set 与 get
 def storeTree(inputTree, filename):
